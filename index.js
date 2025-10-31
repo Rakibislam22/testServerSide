@@ -1,7 +1,4 @@
-require('dotenv').config(); // must be FIRST line
-
-console.log("Loaded URI:", process.env.URI); // temporary check
-
+require('dotenv').config(); 
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion } = require('mongodb');
@@ -29,10 +26,24 @@ async function run() {
         const userCollection = db.collection("users");
 
         app.post('/users' , async (req,res) =>{
-            const newUsers = req.body;
-            const email = newUsers.email;
+            const newUser = req.body;
+            const email = newUser.email;
             const query = {email: email};
-            const find 
+            const find = await userCollection.findOne(query);
+
+            if(find){
+                res.send({message: 'User already exist!!'})
+            }
+            else{
+                const result = await userCollection.insertOne(newUser);
+                res.send(result);
+            }
+        })
+
+        app.get('/users', async (req,res) =>{
+            const cursor = userCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
         })
 
 
@@ -41,7 +52,7 @@ async function run() {
     } catch (err) {
         console.error("❌ MongoDB connection error:", err);
     } finally {
-        await client.close();
+        
     }
 }
 
